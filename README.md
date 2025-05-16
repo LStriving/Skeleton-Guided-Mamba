@@ -23,7 +23,7 @@ Please refer to [INSTALL.md](./INSTALL.md) for installation.
 ## Performance
 
 Comparison with State-of-the-Art Methods.
-The best and second performances are highlighted in **bold** and _underline_, respectively.
+The best and second performances are highlighted in **bold** and _italic_, respectively.
 "Ske." denotes skeleton input. Temporal action localization methods are applied _as-is_ to VFSS for temporal micro-action localization.
 "Oracle" means we use the ground-truth of coarse stage as the input proposals to explore the upper bound of our method.
 
