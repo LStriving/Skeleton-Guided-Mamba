@@ -58,7 +58,12 @@ The best performances are highlighted in **bold**.
 coming soon...
 
 ## Checkpoints
-coming soon...
+
+### Extractors
+
+**I3D Extractor**: The I3D extractor is used to extract the appearance features from the input video frames. The pre-trained weights can be downloaded from [hugging face](https://huggingface.co/LStriving/sg-mamba/blob/main/pretrained_swallow_i3d.pth). After downloading, please place the file in the `pretrained` directory.
+
+**Skeleton Extractor**: The skeleton extractor is used to extract the skeleton features from the input video frames. The pre-trained weights can be downloaded from [hugging face](https://huggingface.co/LStriving/sg-mamba/blob/main/best_model_trace.pt). After downloading, please place the file in the `pretrained/heatmap` directory.
 
 ## Training
 
