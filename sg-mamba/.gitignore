@@ -1,0 +1,27 @@
+# extracted features
+*.npy
+# ckpt
+*.pt
+*.pth
+*.pth.tar
+# debug
+*debug*
+# cache
+__pycache__
+# tensorboard
+*tfevents*
+# ckpt
+ckpts/
+# log files
+*.log
+# tmp files
+tmp/
+*.pkl
+
+*.csv
+*result*
+data/
+analysis/*.png
+analysis/*/*.png
+cache
+*.tex
