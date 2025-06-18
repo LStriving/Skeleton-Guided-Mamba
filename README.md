@@ -3,9 +3,9 @@
 Official code for the paper "Temporal Micro-action Localization with Skeleton-Guided Mamba for Videofluoroscopic Swallowing Study".
 
 ## 📢 News
-- [2025/06/18] Code is released.
-- [2025/05/15] The supplementary material is available at [supplementary](./assets/Supplementary.pdf).
-- [2025/05/13] 🔄The repository is created.
+- [2025/06/18] 🔥 Code is released.
+- [2025/05/15] 📕 The supplementary material is available at [supplementary](./assets/Supplementary.pdf).
+- [2025/05/13] 🔄 The repository is created.
 
 ## Abstract
 
