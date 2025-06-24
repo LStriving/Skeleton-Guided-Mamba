@@ -2,7 +2,7 @@
 ![framework](./assets/framework.png)
 
 > **Temporal Micro-action Localization with Skeleton-Guided Mamba for Videofluoroscopic Swallowing Study**  \
-[Yirui Li](https://github.com/LStriving), [Kai Zhou](https://scholar.google.com/citations?user=58UyQ9cAAAAJ&hl=zh-CN&oi=ao), [Meng Dai](https://orcid.org/0000-0001-8275-572X), [Haiyu Zhou](https://loop.frontiersin.org/people/1320354/overview), [Jinwu Hu](https://scholar.google.com/citations?user=XmqjPi0AAAAJ&hl=en), [Yifan Yang](https://scholar.google.com/citations?user=veb6adUAAAAJ&hl=zh-CN&oi=ao), [Jian Chen](https://www.scholat.com/ellachen.en), [Fei Liu](https://scholar.google.com/citations?user=gC-YMYgAAAAJ&hl=en), and [Mingkui Tan](https://tanmingkui.github.io/) \
+[Yirui Li](https://github.com/LStriving), [Kai Zhou](https://scholar.google.com/citations?user=58UyQ9cAAAAJ&hl=zh-CN&oi=ao), [Meng Dai](https://orcid.org/0000-0001-8275-572X), [Haiyu Zhou](https://loop.frontiersin.org/people/1320354/overview), [Jinwu Hu](https://scholar.google.com/citations?user=XmqjPi0AAAAJ&hl=en), [Yifan Yang](https://scholar.google.com/citations?user=veb6adUAAAAJ&hl=zh-CN&oi=ao), [Jian Chen](https://www.scholat.com/ellachen.en), [Fei Liu](https://scholar.google.com/citations?user=gC-YMYgAAAAJ&hl=en), [Hongming Cai](https://scholar.google.com/citations?user=B2BWq_EAAAAJ&hl=zh-CN&oi=ao), and [Mingkui Tan](https://tanmingkui.github.io/) \
 South China University of Technology, The Third Affiliated Hospital of Sun Yat-sen University, Guangdong Provincial People's Hospital 
 
 
