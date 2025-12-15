@@ -41,6 +41,7 @@ conda install pytorch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 pytorch-cuda=
 ```bash
 cd causal-conv1d
 pip install . # an efficient implementation of a simple causal Conv1d layer used inside the Mamba block.
+# pip install --no-build-isolation . # try this when failed.
 cd ../mamba
 pip install -e . # the core Mamba package. (you should not run `pip install mamba-ssm` here since it is different from the original mamba-ssm package)
 ```
