@@ -82,8 +82,8 @@ def timeCost(timeCost):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='evaluation')
-    parser.add_argument('--video_path', type=str, help='path of rgb datas', default="")
-    parser.add_argument('--save_path', type=str, help='path to save', default="")
+    parser.add_argument('--video_path', type=str, help='dir path of rgb datas', default="")
+    parser.add_argument('--save_path', type=str, help='dir path to save', default="")
     args = parser.parse_args()
     return args
 

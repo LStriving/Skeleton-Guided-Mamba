@@ -19,11 +19,11 @@ def get_file_list(file_path, ext='.avi'):
 def main(args):
     sigma = args.sigma
     if args.img_width is not None and args.img_height is not None:
-        processor = VideoKeypointProcessor('./pretrained/heatmap/best_model_trace.pt',
+        processor = VideoKeypointProcessor('./ckpts/best_model_trace.pt',
                                         image_height=args.img_height, image_width=args.img_width,
                                         sigma=sigma)
     else:
-        processor = VideoKeypointProcessor('./pretrained/heatmap/best_model_trace.pt',
+        processor = VideoKeypointProcessor('./ckpts/best_model_trace.pt',
                                         sigma=sigma)
     input_dir = args.input_dir
     output_dir = args.output_dir
@@ -64,10 +64,10 @@ def main(args):
 
 def infer_single_image(args):
     if args.no_crop:
-        processor = VideoKeypointProcessor2('./pretrained/heatmap/best_model_trace.pt',
+        processor = VideoKeypointProcessor2('./ckpts/best_model_trace.pt',
                                         sigma=args.sigma, crop_mode='none')
     else:
-        processor = VideoKeypointProcessor2('./pretrained/heatmap/best_model_trace.pt',
+        processor = VideoKeypointProcessor2('./ckpts/best_model_trace.pt',
                                         sigma=args.sigma)
     input_image_path = args.image_path
     output_image_path = args.output_image_path
