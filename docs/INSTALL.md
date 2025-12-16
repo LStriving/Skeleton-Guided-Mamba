@@ -40,9 +40,16 @@ cd ../mamba
 pip install -e . # the core Mamba package. (you should not run `pip install mamba-ssm` here since it is different from the original mamba-ssm package)
 ```
 
-### Install other dependencies (NMS)
+### Install other dependencies 
 
+#### NMS
 ```bash
 cd ../sg-mamba/libs/utils
 python setup.py install --user
+```
+
+### Install remaining Python packages
+
+```bash
+pip install opencv-python scikit-video numpy==1.23.5 opencv-contrib-python matplotlib
 ```

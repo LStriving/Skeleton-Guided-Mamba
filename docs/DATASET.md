@@ -7,10 +7,23 @@ Please fill out the form below to request access to the dataset used in this pro
 ## Prepare the dataset
 
 ### Option 1: From the original dataset
-1. Download the original dataset.
-2. Slide the videos into clips with 4 seconds duration.
-3. Extract the I3D features from the videos using the provided script.
-4. Extract the skeleton features from the videos using the provided script.
+1. Download the original(slided) dataset.
+2. (Optional) Slide the videos into clips with 4 seconds duration.
+3. Extract the optical flow frames from the videos using the provided script.
+```bash
+python sg-mamba/tools/extract_flow_frame.py --video_path /path/to/slided/videos --save_path /path/to/save/flow/frames
+```
+4. Extract the I3D features from the videos and flow frames using the provided script.
+5. Extract the skeleton features from the videos using the provided script.
+```bash
+python tools/extract_heatmap.py \
+    --input_dir /path/to/slided/videos \
+    --output_dir /path/to/save/heatmaps \
+    --sigma 4 \
+    --feature_type fusion \
+    --img_width 612 \
+    --img_height 612
+```
 
 ### Option 2: From the preprocessed dataset
 1. Download the preprocessed dataset.
