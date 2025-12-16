@@ -29,6 +29,11 @@ conda activate sg-mamba
 conda install pytorch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 pytorch-cuda=11.8 -c pytorch -c nvidia
 # CUDA 12.1
 # conda install pytorch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 pytorch-cuda=12.1 -c pytorch -c nvidia
+# CUDA 11.8
+# pip install torch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 --index-url https://download.pytorch.org/whl/cu118
+# CUDA 12.1
+# pip install torch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 --index-url https://download.pytorch.org/whl/cu121
+
 ```
 
 ### Install Mamba
@@ -36,6 +41,7 @@ conda install pytorch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 pytorch-cuda=
 ```bash
 cd causal-conv1d
 pip install . # an efficient implementation of a simple causal Conv1d layer used inside the Mamba block.
+# pip install --no-build-isolation . # try this when failed.
 cd ../mamba
 pip install -e . # the core Mamba package. (you should not run `pip install mamba-ssm` here since it is different from the original mamba-ssm package)
 ```
@@ -46,6 +52,12 @@ pip install -e . # the core Mamba package. (you should not run `pip install mamb
 ```bash
 cd ../sg-mamba/libs/utils
 python setup.py install --user
+```
+
+### Install remaining Python packages
+
+```bash
+pip install opencv-python scikit-video numpy==1.23.5 opencv-contrib-python matplotlib
 ```
 
 ### Install remaining Python packages
