@@ -103,6 +103,10 @@ if __name__ == '__main__':
         savePath=args.save_path+"/"+videoName[0:len(videoName)-4]
         if os.path.exists(savePath):
             continue
-        extract_flow(videoPath,savePath,IMG_WIDTH, IMG_HEIGHT)
+        try:
+            extract_flow(videoPath,savePath,IMG_WIDTH, IMG_HEIGHT)
+        except Exception as e:
+            logging.error(f"Error processing {videoName}: {e}")
+            continue
         count+=1
         nowTime=time.time()

@@ -4,24 +4,26 @@ import cv2
 import numpy as np
 import torch
 from tqdm import tqdm
-import os,tarfile,io
+import tarfile
+import io
 from torchvision import utils as vutils
 from PIL import Image
 import skvideo.io
-from torch.autograd import Variable
 from collections import OrderedDict
 from pytorch_i3d import InceptionI3d
+
+# Set environment variable for thread control
 os.environ['OMP_NUM_THREADS'] = "8"
 
-#videosDir="2stages/datas/"
-i3d_flow=None
-i3d_rgb=None
+# Global variables for I3D models
+i3d_flow = None
+i3d_rgb = None
 
+# Function to extract flow frames from a tar.gz file
 def get_flow_frames_from_targz(tar_dir):
-    list_u=[]
-    list_v=[]
+    list_u, list_v = [], []
     with tarfile.open(tar_dir) as tar:
-        mems=sorted(tar.getmembers(),key=lambda x:x.path)
+        mems = sorted(tar.getmembers(), key=lambda x: x.path)
         for x in mems:
            if(x.size==0):
                continue
@@ -58,142 +60,173 @@ def get_batch_data(slide_datas,batch_size,c,args):
     slide_datas=slide_datas.view(-1,batch_size,8,args.img_size,args.img_size,c)
     return slide_datas
 
-def extractFeature(b_datas,mode):
-    if mode == 'flow':
-        i3d = i3d_flow
-    else:
-        i3d = i3d_rgb
-    res=[]
-    for b_data in b_datas:
-        b_data = b_data.permute(0, 4, 1, 2, 3)
-
-        if args.cuda:
-            b_data = Variable(b_data.cuda(), volatile=True).float()
-        else:
-            b_data = Variable(b_data, volatile=True).float()
-
-        b_features = i3d.extract_features(b_data)
-        res.append(b_features.data.cpu().numpy())
-    b_features=np.vstack(res)
-    b_features = b_features[:,:,0,0,0]
-    return b_features
-
+# Function to save tensor as an image
 def save_image_tensor(input_tensor: torch.Tensor, filename):
     """
-    将tensor保存为图片
-    :param input_tensor: 要保存的tensor
-    :param filename: 保存的文件名
+    Save a tensor as an image.
+    :param input_tensor: Tensor to save
+    :param filename: Output filename
     """
-    assert (len(input_tensor.shape) == 4 and input_tensor.shape[0] == 1)
-    # 复制一份
-    input_tensor = input_tensor.clone().detach()
-    # 到cpu
-    input_tensor = input_tensor.to(torch.device('cpu'))
-    # 反归一化
-    #input_tensor = unnormalize(input_tensor)
-    vutils.save_image(input_tensor.permute(0,3,1,2), filename,normalize=True)
+    assert input_tensor.shape[0] == 1 and len(input_tensor.shape) == 4
+    input_tensor = input_tensor.clone().detach().to(torch.device('cpu'))
+    vutils.save_image(input_tensor.permute(0, 3, 1, 2), filename, normalize=True)
 
-def get_features(batch_data,mode):
-    full_features = [[]]
-    full_features[0].append(extractFeature(batch_data,mode))
-    full_features = [np.concatenate(i, axis=0) for i in full_features]
-    full_features = [np.expand_dims(i, axis=0) for i in full_features]
-    full_features = np.concatenate(full_features, axis=0)
-    return full_features
+
+def get_features(data, mode, batch_size=32):
+    '''
+    data: (T, 8, W, H, C)
+    mode: 'rgb' or 'flow'
+    return data with shape: (T, 1024)
+    '''
+    data = data.permute(0, 4, 1, 2, 3) # (T, C, 8, W, H)
+    if batch_size == -1:
+        batch_size = data.shape[0]
+    batch_loader = torch.utils.data.DataLoader(data, batch_size=batch_size, shuffle=False)
+    if mode == 'rgb':
+        i3d = i3d_rgb
+    else:
+        i3d = i3d_flow
+    
+    all_features = []
+    for batch in batch_loader:
+        batch = batch.float().cuda()
+        with torch.no_grad():
+            features = i3d.extract_features(batch)
+        # output: (batch_size, 1024, 1, 1, 1)
+        features = features[:, :, 0, 0, 0].cpu().numpy()
+        all_features.append(features)
+    all_features = np.concatenate(all_features, axis=0)
+    return all_features
+
+def resize_data(data, image_size):
+    data_tmp=torch.zeros(data.shape[0:1]+(image_size,image_size,data.shape[-1])).float()
+    for index, datum in enumerate(data):
+        datum_tmp = torch.from_numpy(cv2.resize(datum.numpy(),(image_size,image_size))).float()
+        data_tmp[index,:,:,:] = datum_tmp
+    return data_tmp
 
 #return rgb featrue,flow feature,frame cnt
 def getVideoFeatures(videoName,args):
+    # 1.rgb data
     rgb_datas=skvideo.io.vread(os.path.join(args.videos_dir,videoName+".avi"))
-    frame_cnt=rgb_datas.shape[0]
     rgb_datas=torch.from_numpy(rgb_datas)
-    rgb_datas_tmp=torch.zeros(rgb_datas.shape[0:1]+(args.img_size,args.img_size,3)).double()
-    for index,rgb_data in enumerate(rgb_datas):
-        rgb_data_tmp=torch.from_numpy(cv2.resize(rgb_data.numpy(),(args.img_size,args.img_size))).double()
-        rgb_datas_tmp[index,:,:,:]=rgb_data_tmp
-    #rgb_datas=torch.nn.functional.interpolate(rgb_datas,size=[args.img_size,args.img_size,3],mode="linear")
-    rgb_datas=rgb_datas_tmp
+    ## resize the rgb_datas if needed
+    if rgb_datas.shape[1]!=args.img_size or rgb_datas.shape[2]!=args.img_size:
+        rgb_datas = resize_data(rgb_datas, args.img_size)
     rgb_datas=rgb_datas.view(-1,args.img_size,args.img_size,3)
+    ## normalize rgb datas to [-1,1]
     rgb_datas=rgb_datas/127.5-1
-    slidedatas_rgb=slideTensor(rgb_datas,args.chunk_size,args.frequency)
-    slidedatas_rgb=get_batch_data(slidedatas_rgb,args.batch_size,3,args)
+    # 2.flow data
     flow_datas=get_flow_frames_from_targz(os.path.join(args.flow_dir,videoName+".tar.gz"))
-    flow_datas_tmp=torch.zeros(flow_datas.shape[0:1]+(args.img_size,args.img_size,2)).double()
-    for index,flow_data in enumerate(flow_datas):
-        flow_data_tmp=torch.from_numpy(cv2.resize(flow_data.numpy(),(args.img_size,args.img_size))).double()
-        flow_datas_tmp[index,:,:,:]=flow_data_tmp
-    #flow_datas=torch.nn.functional.interpolate(flow_datas,size=[args.img_size,args.img_size,2],mode="nearest")
-    flow_datas=flow_datas_tmp
+    ## resize flow datas if needed
+    if flow_datas.shape[1]!=args.img_size or flow_datas.shape[2]!=args.img_size:
+        flow_datas = resize_data(flow_datas, args.img_size)
     flow_datas=flow_datas.view(-1,args.img_size,args.img_size,2)
-    slidedatas_flow=slideTensor(flow_datas,args.chunk_size,args.frequency)
-    slidedatas_flow=get_batch_data(slidedatas_flow,args.batch_size,2,args)
-    feat_spa=get_features(slidedatas_rgb,"rgb")
-    feat_tem=get_features(slidedatas_flow,"flow")
-    feat_spa=torch.from_numpy(feat_spa).permute(0,2,1)
-    feat_tem=torch.from_numpy(feat_tem).permute(0,2,1)
-    feat_spa=torch.nn.functional.interpolate(feat_spa,size=[args.feature_frame_cnt]).permute(0,2,1)
-    feat_tem=torch.nn.functional.interpolate(feat_tem,size=[args.feature_frame_cnt]).permute(0,2,1)
-    return [feat_spa,feat_tem,frame_cnt]
+    # 3. extract features
+    ## saved path
+    saved_path=os.path.join(args.output_dir,videoName+".npy")
+    extract_features(rgb_datas, flow_datas, saved_path, 0.0, 1.0, args.chunk_size, args.frequency, branch='rgb',batch_size=args.batch_size)
 
+def extract_features(rgb_data, 
+                     flow_data, 
+                     new_feat_file, 
+                     start_ratio, 
+                     end_ratio, 
+                     win_size, 
+                     win_step, 
+                     preprocess=None, 
+                     cropped=False, 
+                     branch='rgb',
+                     batch_size=-1):
+    rgb_time_long = rgb_data.shape[0]
+    mode = 'rgb'
+    # clip
+    if not cropped:
+        rgb_start_idx = max(0, int(start_ratio * rgb_time_long))
+        rgb_end_idx = min(rgb_time_long, int(end_ratio * rgb_time_long))
+        rgb_data = rgb_data[rgb_start_idx:rgb_end_idx]
+    if preprocess is not None:
+        rgb_data = preprocess(rgb_data)
+        mode = branch
+    if branch is None or branch == '' or branch.lower() == 'none':
+        # do not extract but save only
+        np.save(new_feat_file, rgb_data.squeeze(-1))
+        return rgb_data
+    # slide
+    rgb_data = slideTensor(rgb_data, win_size, win_step)
+    # get feat
+    feat_spa=get_features(rgb_data, mode, batch_size=batch_size)
+    feat_spa=torch.from_numpy(feat_spa)
+
+    if flow_data is not None:
+        flow_time_long = flow_data.shape[0]
+        if not cropped:
+            flow_start_idx = max(0, int(start_ratio * flow_time_long))
+            flow_end_idx = min(flow_time_long, int(end_ratio * flow_time_long))
+            flow_data = flow_data[flow_start_idx:flow_end_idx]
+        flow_data = slideTensor(flow_data, win_size, win_step)
+        feat_tem=get_features(flow_data,"flow", batch_size=batch_size)
+        feat_tem=torch.from_numpy(feat_tem)
+        # concat rgb and flow features
+        feat = np.concatenate([feat_spa, feat_tem], axis=1)
+    else:
+        feat = feat_spa
+    # save feat
+    np.save(new_feat_file, feat)
+    return feat
+
+# Function to initialize I3D models
 def initI3ds(args):
-    global i3d_rgb,i3d_flow
+    global i3d_rgb, i3d_flow
     i3d_flow = InceptionI3d(400, in_channels=2)
     i3d_flow.load_state_dict(torch.load(args.flow_i3d))
+
     i3d_rgb = InceptionI3d(7, in_channels=3)
-    new_kv=OrderedDict()
-    old_kv=torch.load(args.rgb_i3d)['state_dict']
-    for k,v in old_kv.items():
-        new_kv[k.replace("module.","")]=v
+    new_kv = OrderedDict()
+    old_kv = torch.load(args.rgb_i3d)['state_dict']
+    for k, v in old_kv.items():
+        new_kv[k.replace("module.", "")] = v
     i3d_rgb.load_state_dict(new_kv)
-    #i3d_rgb = InceptionI3d(400, in_channels=3)
-    #i3d_rgb.load_state_dict(torch.load(load_model_rgb))
-    i3d_rgb.train(False)
-    i3d_flow.train(False)
+
+    i3d_rgb.eval()
+    i3d_flow.eval()
+
     if args.cuda:
         i3d_rgb.cuda()
         i3d_flow.cuda()
 
+# Main function to process videos
 def run(args):
-    os.makedirs(args.output_dir,exist_ok=True)
+    os.makedirs(args.output_dir, exist_ok=True)
     initI3ds(args)
-    videoDirs=os.listdir(args.videos_dir)
-    #videoDirs=[i for i in videoDirs if (i.endswith("_5.avi") or i.endswith("_6.avi"))]
-    tem_outdir=os.path.join(args.output_dir,args.i3dFlowFeatureDir)
-    rgb_outdir=os.path.join(args.output_dir,args.i3dFeatureDir)
-    os.makedirs(tem_outdir,exist_ok=True)
-    os.makedirs(rgb_outdir,exist_ok=True)
-    for videoDir in tqdm(videoDirs):
-        name=videoDir.split(".avi")[0]
-        if os.path.exists(os.path.join(tem_outdir,name+".npz")) and os.path.exists(os.path.join(rgb_outdir,name+".npz")):
-            x=1
-        features=getVideoFeatures(name,args)
-        feat_spa,feat_tem,frame_cnt=features
-        np.savez(os.path.join(tem_outdir,name),
-            feature=feat_tem,
-            frame_cnt=frame_cnt,
-            video_name=name,
-        )
-        np.savez(os.path.join(rgb_outdir,name),
-            feature=feat_spa,
-            frame_cnt=frame_cnt,
-            video_name=name,
-        )
+    assert os.path.exists(args.videos_dir), f'{args.videos_dir} does not exist'
+    videoDir = os.listdir(args.videos_dir)
+    if args.filter_list is not None:
+        with open(args.filter_list, 'r') as f:
+            filter_videos = set(line.strip() for line in f)
+        videoDir = [video for video in videoDir if video in filter_videos]
+
+    for video in tqdm(videoDir):
+        name=video.split(".avi")[0]
+        if os.path.exists(os.path.join(args.output_dir,name+".npy")) and not args.overwrite:
+            continue
+        getVideoFeatures(name,args)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument('--videos_dir', type=str, default="result/datas/", help='Test data path')
+    parser.add_argument('--flow_dir', type=str, default="result/flow_frames/", help='Test flow data path')
     parser.add_argument('--output_dir', type=str, default="./I3D/i3d_result/8_3_256_new_clip")
-    parser.add_argument('--i3dFeatureDir', type=str, default="rgb_feature")
-    parser.add_argument('--i3dFlowFeatureDir', type=str, default="flow_feature")
-    parser.add_argument('--img_size', type=int, help='image size', default=128)
-    parser.add_argument('--frequency', type=int, help='sample frequency', default=3)
-    parser.add_argument('--chunk_size', type=int, help='chunk size', default=8)
-    parser.add_argument('--batch_size', type=int, help='batch size', default=32)
-    parser.add_argument('--videos_dir', type=str, help='test data path', default="result/datas/")
-    parser.add_argument('--flow_dir', type=str, help='test flow data path', default="result/flow_frames/")
-    parser.add_argument('--cuda', action="store_true", help='if use gpu')
-    parser.add_argument('--flow_i3d', type=str, help='test data path', default="I3D/models/flow_imagenet.pt")
-    parser.add_argument('--rgb_i3d', type=str, help='test data path', default="/mnt/cephfs/home/nigengqin/i3d/exp/8frames_lr01_bs4_12_13/checkpoint.best.pth")
-    parser.add_argument('--feature_frame_cnt', type=int, help='number of frame of a clip', default=256)
-    parser.add_argument('--before_batch_cnt', type=int, help='number of frame before interplote', default=256)
-    parser.add_argument('--no_interpolate', action="store_true", help='if not interpolate features')
+    parser.add_argument('--filter_list', type=str, default=None, help='Filter list for videos to process')
+    parser.add_argument('--img_size', type=int, default=128, help='Image size')
+    parser.add_argument('--frequency', type=int, default=3, help='Sample frequency')
+    parser.add_argument('--chunk_size', type=int, default=8, help='Chunk size')
+    parser.add_argument('--batch_size', type=int, default=-1, help='Batch size')
+    parser.add_argument('--cuda', action="store_true", help='Use GPU if available')
+    parser.add_argument('--flow_i3d', type=str, default="/mnt/cephfs/home/liyirui/project/Skeleton-Guided-Mamba/sg-mamba/ckpts/flow_imagenet.pt", help='Flow I3D model path')
+    parser.add_argument('--rgb_i3d', type=str, default="/mnt/cephfs/home/liyirui/project/Skeleton-Guided-Mamba/sg-mamba/ckpts/pretrained_swallow_i3d.pth", help='RGB I3D model path')
+    # parser.add_argument('--feature_frame_cnt', type=int, default=256, help='Number of frames in a clip')
+    parser.add_argument('--before_batch_cnt', type=int, default=256, help='Number of frames before interpolation')
+    parser.add_argument('--overwrite', action="store_true", help='Overwrite existing features')
     args = parser.parse_args()
     run(args)
