@@ -429,7 +429,7 @@ class VideoKeypointProcessor:
 if __name__ == "__main__":
     
     # video_path = "test_video.mp4"
-    model_path = "./pretrained/heatmap/best_model_trace.pt"
+    model_path = "./ckpts/best_model_trace.pt"
     processor = VideoKeypointProcessor(model_path)
     # video_array = skvideo.io.vread(video_path)
     # print(video_array.shape) # (86, 612, 612, 3)
@@ -469,9 +469,9 @@ if __name__ == "__main__":
         save_np = f'{base_name}.npy'
         os.makedirs(output_root, exist_ok=True)
         save_path = os.path.join(output_root, save_np)
-        
+        video_array = skvideo.io.vread(video_path)
         # Extract heatmap data
-        data = obj.infer_heatmaps(video_path, kalman, normal_kalman)[selected_index]
+        data = obj.infer_heatmaps(video_array, kalman, normal_kalman)[selected_index]
         
         # Resize if needed
         if output_size is not None:
@@ -491,7 +491,7 @@ if __name__ == "__main__":
         with open(input_file, 'r') as f:
             data = f.readlines()
         
-        videos = [os.path.join(input_root, f'{i.strip()}.avi') for i in data if i.strip() != '']
+        videos = [os.path.join(input_root, f'{i.split(",")[0].strip()}.avi') for i in data if i.strip() != '']
         print(f'Total {len(videos)} videos to process.')
         
         results = []
@@ -515,12 +515,12 @@ if __name__ == "__main__":
     # Process videos
     results = process_all_videos(
         obj=processor,
-        input_root='datas/',
-        input_file='stage2-trainval.txt',
-        output_root='dataset/swallow_heatmap56_sigma4_normalkalman',
+        input_root='data/swallow/stage_2',
+        input_file='tmp/stage2_trainval.txt',
+        output_root='data/swallow/swallow_heatmap56_sigma4',
         kalman=True,
-        normal_kalman=True,
-        selected_index=-1,
+        normal_kalman=False,
+        selected_index=-1, # fusion heatmap
         output_size=(56,56),
     )
     

@@ -137,8 +137,8 @@ DEFAULTS = {
         "schedule_gamma": 0.1,
     },
     "keypoint":{
-        "model_path": "./pretrained/heatmap/best_model_trace.pt",
-        "sigma": 0.6,
+        "model_path": "./ckpts/best_model_trace.pt",
+        "sigma": 4,
     },
     "two_tower":{
         "vw": 0.5,

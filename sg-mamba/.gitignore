@@ -1,6 +1,7 @@
 # extracted features
 *.npy
 # ckpt
+cktps/
 *.pt
 *.pth
 *.pth.tar
@@ -25,3 +26,4 @@ analysis/*.png
 analysis/*/*.png
 cache
 *.tex
+*tmp*/

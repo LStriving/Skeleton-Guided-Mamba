@@ -20,7 +20,7 @@ def split_file_list(input_dir, output_dir, num_splits):
     # Split the file list and save to separate text files
     for i in range(num_splits):
         split_files = all_files[i * files_per_split : (i + 1) * files_per_split]
-        split_file_path = os.path.join(output_dir, f'split_{i + 1}_total_{num_splits}.txt')
+        split_file_path = os.path.join(output_dir, f'split_{i}_total_{num_splits}.txt')
         with open(split_file_path, 'w') as f:
             for file_name in split_files:
                 f.write(f"{file_name}\n")

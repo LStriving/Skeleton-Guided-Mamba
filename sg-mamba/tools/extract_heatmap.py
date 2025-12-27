@@ -165,11 +165,11 @@ python tools/extract_heatmap.py \
 # single image inference
 python tools/extract_heatmap.py \
     --img_input \
-    --image_path assets/image.png \
+    --image_path tmp/output.jpg \
     --output_image_path tmp/plot/single_image_heatmap.png \
     --sigma 4 \
     --feature_type fusion \
-    --img_width 612 \
-    --img_height 612 \
+    --img_width 56 \
+    --img_height 56 \
     --no_crop
 '''

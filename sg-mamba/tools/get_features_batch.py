@@ -108,7 +108,11 @@ def resize_data(data, image_size):
 #return rgb featrue,flow feature,frame cnt
 def getVideoFeatures(videoName,args):
     # 1.rgb data
-    rgb_datas=skvideo.io.vread(os.path.join(args.videos_dir,videoName+".avi"))
+    try:
+        rgb_datas=skvideo.io.vread(os.path.join(args.videos_dir,videoName+".avi"))
+    except Exception as e:
+        print(f"Error reading video {videoName}: {e}")
+        return
     rgb_datas=torch.from_numpy(rgb_datas)
     ## resize the rgb_datas if needed
     if rgb_datas.shape[1]!=args.img_size or rgb_datas.shape[2]!=args.img_size:
@@ -117,7 +121,11 @@ def getVideoFeatures(videoName,args):
     ## normalize rgb datas to [-1,1]
     rgb_datas=rgb_datas/127.5-1
     # 2.flow data
-    flow_datas=get_flow_frames_from_targz(os.path.join(args.flow_dir,videoName+".tar.gz"))
+    try:
+        flow_datas=get_flow_frames_from_targz(os.path.join(args.flow_dir,videoName+".tar.gz"))
+    except Exception as e:
+        print(f"Error reading flow data for {videoName}: {e}")
+        return
     ## resize flow datas if needed
     if flow_datas.shape[1]!=args.img_size or flow_datas.shape[2]!=args.img_size:
         flow_datas = resize_data(flow_datas, args.img_size)

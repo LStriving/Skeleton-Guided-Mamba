@@ -239,7 +239,7 @@ def generate_a_limb_heatmap(arr, starts, ends, start_values, end_values, sigma =
 
 
 class VideoKeypointProcessor:
-    def __init__(self, model_path, image_width=192, image_height=256, batch_size=32, num_workers=4, sigma=0.6, crop_mode='auto',device='cuda'):
+    def __init__(self, model_path, image_width=192, image_height=256, batch_size=64, num_workers=4, sigma=0.6, crop_mode='auto',device='cuda'):
         self.image_width = image_width
         self.image_height = image_height
         self.batch_size = batch_size
@@ -298,6 +298,7 @@ class VideoKeypointProcessor:
         outputs_list = []
         for batch in tqdm(data_loader, desc="Inferencing keypoints"):
             batch = batch.to(self.device)
+            print("Batch shape:", batch.shape)
             with torch.no_grad():
                 outputs = self.model(batch)
             outputs_list.append(outputs.cpu().numpy())
