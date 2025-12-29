@@ -16,7 +16,7 @@ def crop_video(video_path, output_path, start_time: float, end_time: float):
     end_frame = min(end_frame, frame_cnt)
 
     cropped_video = video[start_frame:end_frame]
-    os.path.makedirs(os.path.dirname(output_path), exist_ok=True)
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     skvideo.io.vwrite(output_path, cropped_video)
 
 

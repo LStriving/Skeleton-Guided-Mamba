@@ -532,6 +532,7 @@ def extract_features_from_res(video_root, new_feat_path, flow_dir, result, cfg):
     new_feats = {}
     per_video_rank = 0
     processor = None
+    preprocess = None
     if cfg['heatmap']:
         from libs.utils import VideoKeypointProcessor2
         print(f"Loading Ckpt from {cfg['keypoint']['model_path']}")
@@ -571,7 +572,7 @@ def extract_features_from_res(video_root, new_feat_path, flow_dir, result, cfg):
                         rgb_data = resize_data(rgb_data, IMAGE_SIZE)
                     rgb_data=rgb_data.view(-1,IMAGE_SIZE,IMAGE_SIZE,3) / 127.5 - 1
                     rgb_data=rgb_data.float()
-                    preprocess = None
+                    
                 # extract keypoint
                 else:
                     preprocess = partial(extract_keypoints, processor=processor, 
@@ -591,7 +592,7 @@ def extract_features_from_res(video_root, new_feat_path, flow_dir, result, cfg):
                 per_video_rank = 0
             else:
                 per_video_rank += 1
-            heatmap_path = os.path.join(cfg['heatmap_dir'], 'heatmap', f"{video_id}#{per_video_rank}.npy")
+            heatmap_path = os.path.join(cfg['heatmap_dir'], f"{video_id}#{per_video_rank}.npy")
             if os.path.exists(heatmap_path):    # already extracted heatmap, read from cache
                 rgb_data = np.load(heatmap_path)
             else: # extract heatmap from video
@@ -875,11 +876,11 @@ if __name__ == '__main__':
     parser.add_argument("--raise_error", action='store_true', help="raise error when video reading error")
     parser.add_argument("--test_first_stage", action='store_true', help="test first stage on AllTime")
     parser.add_argument("--heatmap", action='store_true', help="use heatmap as input") #TODO: better remove it with re-implementation
-    parser.add_argument("--cropped_videos", action='store_true', help="use cropped videos instead of reading from whole vidoe")
+    parser.add_argument("--cropped_videos", action='store_true', help="use cropped videos instead of reading from whole video (used for heatmap extraction)")
     parser.add_argument("--heatmap_dir", type=str, metavar='DIR', default='tmp/heatmaps', help='desired save path to heatmap dir, use it when cropped_videos is True')
     parser.add_argument("--image_size", type=int, default=128, help='image size for heatmap')
     parser.add_argument("--heatmap_size", type=int, default=224, help='heatmap size for heatmap')
-    parser.add_argument("--heatmap_branch", type=str, default='rgb', choices=['rgb', 'flow', 'none'], help='i3d branch for heatmap')
+    parser.add_argument("--heatmap_branch", type=str, default='rgb', choices=['rgb', 'flow', 'none'], help='i3d branch for heatmap, use none to skip i3d feature extraction')
     parser.add_argument("--heatmap_sigma", type=float, default=4.0, help='sigma for heatmap')
     parser.add_argument("--resnet_ateval", action='store_true', help="probe resnet at eval (extracted resnet feature at train)")
     parser.add_argument("--infer_perfect_stage1", action='store_true', help="infer on best stage 1")

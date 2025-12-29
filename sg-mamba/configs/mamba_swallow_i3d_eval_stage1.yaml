@@ -3,7 +3,7 @@ train_split: ['train'] # should be in lower case!
 val_split: ['test'] # should be in lower case!
 dataset: {
   json_file: ./data/swallow/anno/swallow_singlestage.json,
-  feat_folder: ./data/swallow/stage_1,
+  feat_folder: ./data/swallow/stage1_features/rgb_flow_no_interplote/no_interplote,
   file_prefix: ~,
   file_ext: .npy,
   num_classes: 1,
@@ -63,4 +63,4 @@ test_cfg: {
   # comment out L47-48 and uncomment L50 to disable score fusion
   multiclass_nms: True,
 }
-output_folder: ./ckpts/ckpt_swallow/
+output_folder: ./ckpts/best_stage1/

@@ -73,7 +73,7 @@ python setup.py install --user
 
 ```bash
 conda install ffmpeg -c conda-forge -y
-pip install opencv-python scikit-video numpy==1.23.5 opencv-contrib-python matplotlib pandas fairscale timm calflops pykalman joblib
+pip install opencv-python scikit-video numpy==1.23.5 opencv-contrib-python matplotlib pandas fairscale timm calflops pykalman joblib h5py mmengine tensorboard
 ```
 
 

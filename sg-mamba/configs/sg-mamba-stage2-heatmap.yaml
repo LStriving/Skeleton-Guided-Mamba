@@ -1,0 +1,100 @@
+dataset_name: heatmap_rawdata
+train_split: ['train']
+val_split: ['validation']
+dataset: {
+  json_file: ./data/swallow/anno/swallow_stage2_trainval.json,
+  feat_folder: ./data/swallow/swallow_heatmap56_sigma4,
+  file_prefix: Null,
+  file_ext: .npy,
+  num_classes: 1,
+  input_dim: 576,
+  feature_type: "",
+  # feature_type: "_spatial_feature",
+  #2048+768, 1024+768,1280+1024
+  feat_stride: 3,
+  num_frames: 8,
+  # serve as data augmentation
+  trunc_thresh: 0.5,
+  crop_ratio: [0.9, 1.0],
+  resize_to: 56,
+  max_seq_len: 192,
+  two_stage: True,
+  stage_at: 2,
+  desired_actions: [OralDelivery, SoftPalateLift, HyoidExercise, UESOpen, ThroatSwallow, ThroatTransport, LaryngealVestibuleClosure],
+}
+model_name: 'E2Eformer'
+model: {
+  backbone_type: mamba,
+  backbone_arch: [2, 2, 4],
+  max_buffer_len_factor: 1.0,
+  # 192 - 96 - 48 - 24 - 12 - 6
+  n_mha_win_size: [25, 25, 25, 25, -1],
+  regression_range: [
+    [0, 4], [4, 8], [8, 16], [16, 32], [32, 10000]
+  ],
+  scale_factor: 2,
+  fpn_type: identity,
+  image_stem: Null,
+  image_stem_chunk_size: -1,
+  input_dim: 576,
+  max_seq_len: 192,
+  n_head: 4,
+  image_stem: 'none',
+  video_stem: 'video_mamba',
+  video_stem_chunk_size: -1,
+}
+opt: {
+  learning_rate: 0.0001,
+  epochs: 45,
+  weight_decay: 0.05,
+  warmup: True,
+  warmup_epochs: 5,
+}
+loader: {
+  batch_size: 16,
+  accum_steps: 4,
+}
+train_cfg: {
+  init_loss_norm: 100,
+  clip_grad_l2norm: 1.0,
+  cls_prior_prob: 0.01,
+  center_sample: radius,
+  center_sample_radius: 1.5,
+  droppath: 0.1,
+}
+# the inference on THUMOS is quite different from EPIC-kitchens
+# a major performance gain is achieved by fusing external classification scores
+# doing so will require disable multiclass_nms and enable score fusion
+test_cfg: {
+  voting_thresh: 0.7,
+  pre_nms_topk: 2000,
+  max_seg_num: 200,
+  min_score: 0.001,
+  # when using external scores, our model is generating "proposals"
+  # multiclass_nms: False,
+  # ext_score_file: ./data/thumos/annotations/thumos14_cls_scores.pkl,
+  # comment out L47-48 and uncomment L50 to disable score fusion
+  multiclass_nms: True,
+}
+two_tower: {
+  ca_type: 'ca',
+  vw: 0.5,
+  vws: Null,
+  act_checkpoint: False,
+  init_value: 0.1,
+  channel_agg: True,
+  include_ori_loss: False,
+}
+image_stem: {}
+video_stem: {
+  act_checkpoint: False,
+  drop_path_rate: 0.1,
+  embed_dim: 576,
+  feature_output_method: 'avg',
+  in_channels: 1,
+  num_frames: 8,
+  num_layers: 3,
+  patch_size: 7,
+  image_size: 56,
+}
+output_folder: ./ckpts/e2e_heatmap_stage2_video_mamba_l3_ep45_sigma4_hid576/

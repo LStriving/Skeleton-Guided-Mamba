@@ -27,3 +27,5 @@ analysis/*/*.png
 cache
 *.tex
 *tmp*/
+
+.vscode/

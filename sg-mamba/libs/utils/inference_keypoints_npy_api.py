@@ -335,6 +335,8 @@ class VideoKeypointProcessor:
         return self.keypoints, self.confidences, h, w
     
     def infer_heatmaps(self, video_array, kalman=True, normal_kalman=False):
+        if isinstance(video_array, str):
+            video_array = skvideo.io.vread(video_array)
         keypoints, confidences, h, w = self.infer_keypoints(video_array, kalman=kalman, normal_kalman=normal_kalman)
         keypoints[:, :, 0] *= w
         keypoints[:, :, 1] *= h  
